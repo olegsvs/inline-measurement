@@ -25,15 +25,15 @@ TWITCH_BEARER_TOKEN = os.getenv("TWITCH_BEARER_TOKEN")
 bot = Bot(token=TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
-dbStreamChecker = TinyDB('roulette/dbStreamChecker.json')
 
 
-async def check_stream():
+async def check_stream(user_login: str, chat_id, verb_form: str):
+    db_stream_checker = TinyDB('roulette/dbStreamChecker_'+ user_login + '.json')
     last_stream_id = -1
     while True:
         try:
             logger.info("Stream checker: running")
-            url = 'https://api.twitch.tv/helix/streams?user_login=c_a_k_e'
+            url = 'https://api.twitch.tv/helix/streams?user_login=' + user_login
             my_headers = {
                 'Client-ID': TWITCH_CLIENT_ID,
                 'Authorization': TWITCH_BEARER_TOKEN
@@ -46,27 +46,28 @@ async def check_stream():
                 stream_id = stream['id']
                 if last_stream_id != stream_id:
                     last_stream_id = stream_id
-                    msg = "👾 C_a_k_e завёл стрим! Категория: " + stream['game_name'] + "\nНазвание стрима - " + stream[
-                        'title'] + "\nhttps://www.twitch.tv/c_a_k_e/?t=" + str(calendar.timegm(time.gmtime()))
-                    msg2 = "👾 C_a_k_e завёл стрим! Категория: " + stream['game_name'] + "\nНазвание стрима - " + stream[
-                        'title'] + "\nhttps://www.twitch.tv/c_a_k_e"
+                    username = stream['user_name']
+                    msg = "👾 " + username + " " + verb_form + " стрим! Категория: " + stream['game_name'] + "\nНазвание стрима - " + stream[
+                        'title'] + "\nhttps://www.twitch.tv/" + user_login + "/?t=" + str(calendar.timegm(time.gmtime()))
+                    msg2 = "👾 " + username + " " + verb_form + " стрим! Категория: " + stream['game_name'] + "\nНазвание стрима - " + stream[
+                        'title'] + "\nhttps://www.twitch.tv/" + user_login
                     thumbnail = stream['thumbnail_url']
-                    alert_for_stream_id_showed = dbStreamChecker.all()
+                    alert_for_stream_id_showed = db_stream_checker.all()
                     send_msg = True
                     if not alert_for_stream_id_showed:
-                        dbStreamChecker.insert({"last_stream_id": last_stream_id})
+                        db_stream_checker.insert({"last_stream_id": last_stream_id})
                     else:
                         for showed_stream_id in alert_for_stream_id_showed:
                             if str(last_stream_id) in str(showed_stream_id):
                                 send_msg = False
                     if send_msg:
                         logger.info("Stream checker: Send msg")
-                        dbStreamChecker.insert({"last_stream_id": last_stream_id})
+                        db_stream_checker.insert({"last_stream_id": last_stream_id})
                         if thumbnail is not None:
                             thumbnail += '?t=' + str(calendar.timegm(time.gmtime()))
-                            await bot.send_photo(chat_id=-1001567412048, photo=thumbnail.replace('{width}','1920').replace('{height}','1080'), caption=msg2)
+                            await bot.send_photo(chat_id=chat_id, photo=thumbnail.replace('{width}','1920').replace('{height}','1080'), caption=msg2)
                         else:
-                            await bot.send_message(chat_id=-1001567412048, text=msg)
+                            await bot.send_message(chat_id=chat_id, text=msg)
                     else:
                         logger.info("Stream checker: Msg already sended")
                     await asyncio.sleep(60 * 10)
@@ -80,9 +81,12 @@ async def check_stream():
             await asyncio.sleep(30)
 
 
-def main():
-    asyncio.run(check_stream())
+async def main():
+    first_task = asyncio.create_task(check_stream('c_a_k_e', -1001173473651, 'завёл'))
+    second_task = asyncio.create_task(check_stream('nastjadd', -1001289529855, 'завела'))
+    await asyncio.gather(first_task, second_task)
 
+asyncio.run(main())
 
 if __name__ == '__main__':
     main()
