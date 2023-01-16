@@ -1,9 +1,9 @@
 Copy example.env to .env and set api keys.
 
-Install python requrements:
+Install python requirements:
 
 ```
-pip install -r requrements.txt
+pip install -r requirements.txt
 ```
 
 Setup cron based on crontab_template if you need run wordle solver everyday
