@@ -46,8 +46,11 @@ async def check_stream():
                 stream_id = stream['id']
                 if last_stream_id != stream_id:
                     last_stream_id = stream_id
-                    msg = "C_a_k_e завёл стрим! Категория: " + stream['game_name'] + "\nНазвание стрима - " + stream[
+                    msg = "👾 C_a_k_e завёл стрим! Категория: " + stream['game_name'] + "\nНазвание стрима - " + stream[
                         'title'] + "\nhttps://www.twitch.tv/c_a_k_e/?t=" + str(calendar.timegm(time.gmtime()))
+                    msg2 = "👾 C_a_k_e завёл стрим! Категория: " + stream['game_name'] + "\nНазвание стрима - " + stream[
+                        'title'] + "\nhttps://www.twitch.tv/c_a_k_e"
+                    thumbnail = stream['thumbnail_url']
                     alert_for_stream_id_showed = dbStreamChecker.all()
                     send_msg = True
                     if not alert_for_stream_id_showed:
@@ -59,7 +62,11 @@ async def check_stream():
                     if send_msg:
                         logger.info("Stream checker: Send msg")
                         dbStreamChecker.insert({"last_stream_id": last_stream_id})
-                        await bot.send_message(chat_id=-1001173473651, text=msg)
+                        if thumbnail is not None:
+                            thumbnail += '?t=' + str(calendar.timegm(time.gmtime()))
+                            await bot.send_photo(chat_id=-1001567412048, photo=thumbnail.replace('{width}','1920').replace('{height}','1080'), caption=msg2)
+                        else:
+                            await bot.send_message(chat_id=-1001567412048, text=msg)
                     else:
                         logger.info("Stream checker: Msg already sended")
                     await asyncio.sleep(60 * 10)
