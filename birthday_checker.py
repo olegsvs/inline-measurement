@@ -18,6 +18,7 @@ load_dotenv()
 
 # TG_BOT_TOKEN
 TOKEN = os.getenv("TG_BOT_TOKEN")
+VOLJ_CHILL_CHAT_ID = os.getenv("VOLJ_CHILL_CHAT_ID")
 bot = Bot(token=TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
@@ -62,7 +63,7 @@ async def check_birthday():
                                 if current_day == birthday_day:
                                     user['last_sent_in_year'] = int(current_year)
                                     msg = '@' + nickname + ', С Днем Рождения! 🍾🎁🎊🎂🎉🎈🥳'
-                                    await bot.send_message(chat_id=-1001531643521, text=msg)
+                                    await bot.send_message(chat_id=VOLJ_CHILL_CHAT_ID, text=msg)
                     file.seek(0)
                     json.dump(json_file, file, indent=4)
                     file.truncate()

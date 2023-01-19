@@ -1,5 +1,5 @@
 #!/usr/bin/sh
-pkill python3
-pkill python3
-pkill python3
+pkill -f bot.py
+pkill -f stream_checker.py
+pkill -f birthday_checker.py
 sleep 5

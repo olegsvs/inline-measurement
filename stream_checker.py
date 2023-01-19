@@ -9,6 +9,8 @@ from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from tinydb import TinyDB
+import vk_api
+from vk_api import VkUpload
 
 # Enable logging
 logging.basicConfig(
@@ -27,12 +29,12 @@ storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
 
-async def check_stream(user_login: str, chat_id, verb_form: str):
+async def check_stream(user_login: str, chat_id, verb_form: str, vk_group_id = None):
     db_stream_checker = TinyDB('roulette/dbStreamChecker_'+ user_login + '.json')
     last_stream_id = -1
     while True:
         try:
-            logger.info("Stream checker: running")
+            logger.info("Stream checker: running for " + user_login)
             url = 'https://api.twitch.tv/helix/streams?user_login=' + user_login
             my_headers = {
                 'Client-ID': TWITCH_CLIENT_ID,
@@ -42,7 +44,7 @@ async def check_stream(user_login: str, chat_id, verb_form: str):
             data = response.json()['data']
             if len(data) != 0 and data[0]['type'] == 'live':
                 stream = data[0]
-                logger.info("Stream checker: streaming")
+                logger.info("Stream checker: streaming " + user_login)
                 stream_id = stream['id']
                 if last_stream_id != stream_id:
                     last_stream_id = stream_id
@@ -61,30 +63,59 @@ async def check_stream(user_login: str, chat_id, verb_form: str):
                             if str(last_stream_id) in str(showed_stream_id):
                                 send_msg = False
                     if send_msg:
-                        logger.info("Stream checker: Send msg")
+                        logger.info("Stream checker: Send msg " + user_login)
                         db_stream_checker.insert({"last_stream_id": last_stream_id})
                         if thumbnail is not None:
                             thumbnail += '?t=' + str(calendar.timegm(time.gmtime()))
-                            await bot.send_photo(chat_id=chat_id, photo=thumbnail.replace('{width}','1920').replace('{height}','1080'), caption=msg2)
+                            thumbnail = thumbnail.replace('{width}','1920').replace('{height}','1080')
+                            if vk_group_id is not None:
+                                send_to_vk_wall(user_login, vk_group_id, msg2, thumbnail)
+                            await bot.send_photo(chat_id=chat_id, photo=thumbnail, caption=msg2)
                         else:
+                            if vk_group_id is not None:
+                                send_to_vk_wall(user_login, vk_group_id, msg)
                             await bot.send_message(chat_id=chat_id, text=msg)
                     else:
-                        logger.info("Stream checker: Msg already sended")
-                    await asyncio.sleep(60 * 10)
+                        logger.info("Stream checker: Msg already sended " + user_login)
+                    await asyncio.sleep(60)
                 else:
-                    await asyncio.sleep(60 * 10)
+                    await asyncio.sleep(60)
             else:
-                logger.info("Stream checker: Not streaming")
+                logger.info("Stream checker: Not streaming " + user_login)
                 await asyncio.sleep(30)
         except Exception as e:
-            logger.error('Stream check failed: ' + str(e))
+            logger.error('Stream check failed for '+ user_login + ',: ' + str(e))
             await asyncio.sleep(30)
 
 
+def send_to_vk_wall(user_login: str, group_id: str, msg: str, photo_url=None):
+    try:
+        vk = vk_api.VkApi(
+            token=os.getenv("VK_APP_TOKEN"))
+        upload = VkUpload(vk)
+        attachment = []
+        if photo_url is not None:
+            file_data = requests.get(photo_url).content
+            with open(user_login + ".jpg", "wb") as file:
+                file.write(file_data)
+            photo_list = upload.photo_wall([open(user_login + ".jpg", 'rb')])
+            attachment = ','.join('photo{owner_id}_{id}'.format(**item) for item in photo_list)
+        vk.method("wall.post", {
+            "owner_id": group_id,
+            "message": msg,
+            "attachments": attachment,
+            "copyright": copyright,
+            "v": 5.122
+        })
+    except Exception as e:
+        logger.error('Send to vk failed: ' + str(e))
+
+
 async def main():
-    first_task = asyncio.create_task(check_stream('c_a_k_e', -1001173473651, 'завёл'))
-    second_task = asyncio.create_task(check_stream('nastjadd', -1001289529855, 'завела'))
-    await asyncio.gather(first_task, second_task)
+    first_task = asyncio.create_task(check_stream('c_a_k_e', os.getenv("CAKE_CHANNEL_ID"), 'завёл', os.getenv("VK_CAKE_GROUP_ID")))
+    second_task = asyncio.create_task(check_stream('nastjadd', os.getenv("NASTJIADD_CHAT_ID"), 'завела'))
+    third_task = asyncio.create_task(check_stream('roadhouse', os.getenv("BOT_TEST_ROOM_CHANNEL_ID"), 'завёл', os.getenv("VK_TEST_GROUP_ID")))
+    await asyncio.gather(first_task, second_task, third_task)
 
 asyncio.run(main())
 

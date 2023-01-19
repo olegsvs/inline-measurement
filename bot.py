@@ -11,7 +11,6 @@ import re
 from datetime import datetime
 from random import randrange
 from uuid import uuid4
-import pandas as pd
 import requests
 from dotenv import load_dotenv
 from tinydb import TinyDB, Query
@@ -19,8 +18,6 @@ import subprocess
 from sys import platform
 from lxml import etree
 from os.path import exists
-import urllib.request
-import urllib.parse
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.types import InlineQuery, InputTextMessageContent, InlineQueryResultArticle, InlineKeyboardMarkup, \
@@ -31,6 +28,7 @@ from stt import STT
 from summary import Summary
 import openai
 from asgiref.sync import sync_to_async
+from pyChatGPT import ChatGPT
 
 
 # Enable logging
@@ -48,6 +46,18 @@ TWITCH_BEARER_TOKEN = os.getenv("TWITCH_BEARER_TOKEN")
 ATERNOS_LOGIN = os.getenv("ATERNOS_LOGIN")
 ATERNOS_PASSWORD = os.getenv("ATERNOS_PASSWORD")
 ATERNOS_SENTRY_NAME = os.getenv("ATERNOS_SENTRY_NAME")
+CHAT_GPT_ACCESS_IDS = os.getenv("CHAT_GPT_ACCESS_IDS")
+DALL_E_ACCESS_IDS = os.getenv("DALL_E_ACCESS_IDS")
+CAKE_CHAT_ID = os.getenv("CAKE_CHAT_ID")
+CAKE_CHANNEL_ID = os.getenv("CAKE_CHANNEL_ID")
+OWNER_USER_ID = os.getenv("OWNER_USER_ID")
+ADMIN_USER_IDS = os.getenv("ADMIN_USER_IDS")
+ATERNOS_ACCESS_IDS = os.getenv("ATERNOS_ACCESS_IDS")
+STT_ACCESS_IDS = os.getenv("STT_ACCESS_IDS")
+VOLJ_CHILL_CHANNEL_ID = os.getenv("VOLJ_CHILL_CHANNEL_ID")
+VOLJ_CHILL_CHAT_ID = os.getenv("VOLJ_CHILL_CHAT_ID")
+
+
 bot = Bot(token=TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
@@ -55,6 +65,8 @@ aternos = None
 stt = STT()
 summary_chat = Summary()
 openai.api_key = os.getenv("OPENAI_API_KEY")
+
+
 # Init db
 db = TinyDB('users/db.json')
 dbCBR = TinyDB('users/dbCBR.json')
@@ -955,13 +967,13 @@ async def summary(message: types.Message):
 
 
 @dp.message_handler(commands=['ask'])
-async def chatgpt(message: types.Message):
-    logger.info("chatgpt request")
+async def ask(message: types.Message):
+    logger.info("ask request")
     sticker = None
     try:
         if await is_old_message(message):
             return
-        if message.chat.id != -1001531643521 and message.chat.id != -1001567412048 and message.chat.id != -1001173473651 and message.chat.id != -1001289529855 and message.chat.id != -1001401914025:
+        if str(message.chat.id) not in CHAT_GPT_ACCESS_IDS:
             return
         city = message.get_args().strip()
         if not city or len(city) == 0:
@@ -973,7 +985,7 @@ async def chatgpt(message: types.Message):
             await message.delete()
             await bot.delete_message(chat_id=bot_message.chat.id, message_id=bot_message.message_id)
         else:
-            logger.info('chatgpt, question: ' + city)
+            logger.info('ask, question: ' + city)
             prmt = "Q: {qst}\nA:".format(qst=city)
             sticker = await message.reply_sticker(
                     sticker=get_search_sticker())
@@ -984,21 +996,61 @@ async def chatgpt(message: types.Message):
                                                                      top_p=0.8,
                                                                      frequency_penalty=0.0,
                                                                      presence_penalty=0.0)
-            logger.info('chatgpt, response:' + response.choices[0].text)
+            logger.info('ask, response:' + response.choices[0].text)
             await sticker.delete()
             sticker = None
             bot_message = await message.reply('Ответ от OpenAI GPT3: ```\n' + response.choices[0].text.replace('```','') + '\n```', parse_mode=ParseMode.MARKDOWN_V2)
     except Exception as e:
-        logger.error('Failed to chatgpt: ' + str(e))
+        logger.error('Failed to ask: ' + str(e))
         bot_message = await message.reply(
             "Произошла ошибка при обращении к OpenAI GPT3: " + str(e),
             parse_mode=ParseMode.HTML,
         )
         if sticker:
             await sticker.delete()
-        #await asyncio.sleep(10)
-        #await message.delete()
-        #await bot_message.delete()
+
+
+#@dp.message_handler(commands=['chat'])
+async def chatgpt(message: types.Message):
+    logger.info("chatgpt request")
+    sticker = None
+    try:
+        if await is_old_message(message):
+            return
+        if str(message.chat.id) not in DALL_E_ACCESS_IDS:
+            return
+        question = message.get_args().strip()
+        if not question or len(question) == 0:
+            bot_message = await message.reply(
+                "Укажите вопрос после команды",
+                parse_mode=ParseMode.HTML,
+            )
+            await asyncio.sleep(3)
+            await message.delete()
+            await bot.delete_message(chat_id=bot_message.chat.id, message_id=bot_message.message_id)
+        else:
+            logger.info('chatgpt, question: ' + question)
+            sticker = await message.reply_sticker(
+                    sticker=get_search_sticker())
+            resp = await sync_to_async(chatgpt_api.send_message)(question)
+            logger.info('chatgpt, response:' + resp['message'])
+            await sticker.delete()
+            sticker = None
+            bot_message = await message.reply('Ответ от OpenAI ChatGPT: ```\n' + resp['message'].replace('```','') + '\n```', parse_mode=ParseMode.MARKDOWN_V2)
+    except Exception as e:
+        logger.error('Failed to chatgpt: ' + str(e))
+        try:
+            bot_message = await message.reply(
+                "Произошла ошибка при обращении к OpenAI ChatGPT: " + str(e),
+                parse_mode=ParseMode.HTML,
+            )
+        except:
+             bot_message = await message.reply(
+                "Произошла ошибка при обращении к OpenAI ChatGPT: Unknown Exception",
+                parse_mode=ParseMode.HTML,
+            )
+        if sticker:
+            await sticker.delete()
 
 
 @dp.message_handler(commands=['image'])
@@ -1007,21 +1059,12 @@ async def dalle(message: types.Message):
     try:
         if await is_old_message(message):
             return
-        if message.chat.id != -1001531643521 and message.chat.id != -1001567412048:
+        if str(message.chat.id) not in DALL_E_ACCESS_IDS:
             bot_message = await message.reply(
                 "У вас нет прав для этой команды",
                 parse_mode=ParseMode.HTML,
             )
             return
-        #if message.from_user.id != 220117151:
-        #    bot_message = await message.reply(
-        #        "У вас нет прав для этой команды",
-        #        parse_mode=ParseMode.HTML,
-        #    )
-        #    await asyncio.sleep(3)
-        #    await message.delete()
-        #    await bot.delete_message(chat_id=bot_message.chat.id, message_id=bot_message.message_id)
-        #    return
         description = message.get_args().strip()
         if not description or len(description) == 0:
             bot_message = await message.reply(
@@ -1084,9 +1127,19 @@ async def switch(message: types.Message) -> None:
             )
         if find_whole_word('увы')(str(message.text)):
             if not message.from_user.is_bot:
-                logger.info("xdd: " + str(username))
+                logger.info("увы: " + str(username))
                 await message.answer_sticker(
                     sticker='CAACAgIAAxkBAAEG2fJjnFnjPKRJD4836gUGOovzIGDRUAACqyIAAhfmkEhTcU-1XtA3hSwE')
+        if find_whole_word('kappa')(str(message.text)) or find_whole_word('каппа')(str(message.text)):
+            if not message.from_user.is_bot:
+                logger.info("каппа: " + str(username))
+                await message.answer_sticker(
+                    sticker='CAACAgIAAxkBAAEHTUJjxmbRMC5uMJrPaPqGpEdx_LJoMgACDgMAAuB5UgcTQTG4A1bbVy0E')
+        if find_whole_word('уы')(str(message.text)):
+            if not message.from_user.is_bot:
+                logger.info("уы: " + str(username))
+                await message.answer_sticker(
+                    sticker='CAACAgIAAxkBAAEHSQdjxYpNE1uIkfj-qyXEHmsKhwle_gACcSoAAkwSIUrCQBlAfjIt3i0E')
         if find_whole_word('изи')(str(message.text)) or find_whole_word('ez')(str(message.text)) or find_whole_word('ezy')(str(message.text)):
             if not message.from_user.is_bot:
                 logger.info("ez: " + str(username))
@@ -1194,7 +1247,7 @@ async def del_message(message: types.Message):
             return
         await message.delete()
         if message.reply_to_message is not None:
-            if message.from_user.id != 220117151:
+            if str(message.from_user.id) != OWNER_USER_ID:
                 logger.info("Delete message: perm denied: " + str(message.from_user.id))
             else:
                 logger.info("Delete message: try deleting message w text: " + str(message.reply_to_message.text))
@@ -1204,11 +1257,11 @@ async def del_message(message: types.Message):
             if not msg_id or len(msg_id) == 0:
                 logger.info("Delete message: msg_id in message not found")
             else:
-                if message.from_user.id != 220117151 and message.from_user.id != 261865758:
+                if str(message.from_user.id) not in ADMIN_USER_IDS:
                     logger.info("Delete message: perm denied: " + str(message.from_user.id))
                 else:
                     logger.info("Delete message: try deleting message w id: " + str(msg_id))
-                    await bot.delete_message(chat_id=-1001173473651, message_id=int(msg_id))
+                    await bot.delete_message(chat_id=CAKE_CHAT_ID, message_id=int(msg_id))
     except Exception as e:
         logger.error('Failed to del msg: ' + str(e))
 
@@ -1221,17 +1274,13 @@ async def ban(message: types.Message):
             return
         await message.delete()
         if message.reply_to_message is not None:
-            if message.from_user.id != 220117151 and message.from_user.id != 261865758:
+            if str(message.from_user.id) not in ADMIN_USER_IDS:
                 logger.info("Ban: perm denied: " + str(message.from_user.id))
             else:
                 logger.info("Ban: try ban user: " + str(message.reply_to_message.from_user.id))
                 await bot.restrict_chat_member(chat_id=message.chat.id,
                                                user_id=int(message.reply_to_message.from_user.id),
                                                permissions=ChatPermissions(can_send_messages=False))
-                #bot_message = await message.answer(
-                #    "Бот забанил " + message.reply_to_message.from_user.get_mention(as_html=True) + " бессрочно.", parse_mode=ParseMode.HTML)
-                #await asyncio.sleep(60)
-                #await bot_message.delete()
         else:
             logger.info("Ban: reply message not found")
     except Exception as e:
@@ -1246,7 +1295,7 @@ async def band(message: types.Message):
             return
         await message.delete()
         if message.reply_to_message is not None:
-            if message.from_user.id != 220117151 and message.from_user.id != 261865758:
+            if str(message.from_user.id) not in ADMIN_USER_IDS:
                 logger.info("Band: perm denied: " + str(message.from_user.id))
             else:
                 logger.info("Band: try ban user: " + str(message.reply_to_message.from_user.id))
@@ -1254,10 +1303,6 @@ async def band(message: types.Message):
                                                user_id=int(message.reply_to_message.from_user.id),
                                                permissions=ChatPermissions(can_send_messages=False))
                 await bot.delete_message(chat_id=message.chat.id, message_id=message.reply_to_message.message_id)
-                #bot_message = await message.answer(
-                #    "Бот забанил " + message.reply_to_message.from_user.get_mention(as_html=True) + " бессрочно.", parse_mode=ParseMode.HTML)
-                #await asyncio.sleep(60)
-                #await bot_message.delete()
         else:
             logger.info("Band: reply message not found")
     except Exception as e:
@@ -1272,7 +1317,7 @@ async def add_points(message: types.Message):
             return
         await message.delete()
         if message.reply_to_message is not None:
-            if message.from_user.id != 220117151:
+            if str(message.from_user.id) != OWNER_USER_ID:
                 logger.info("Add points: perm denied: " + str(message.from_user.id))
             else:
                 count_points = int(message.get_args().strip())
@@ -1306,7 +1351,7 @@ async def mute(message: types.Message):
             return
         await message.delete()
         if message.reply_to_message is not None:
-            if message.from_user.id != 220117151 and message.from_user.id != 261865758:
+            if str(message.from_user.id) not in ADMIN_USER_IDS:
                 logger.info("Mute: perm denied: " + str(message.from_user.id))
             else:
                 seconds = int(message.get_args().strip())
@@ -1322,12 +1367,12 @@ async def mute(message: types.Message):
             if not user_id or len(user_id) == 0:
                 logger.info("Mute: user_id in message not found")
             else:
-                if message.from_user.id != 220117151 or message.from_user.id != 261865758:
+                if str(message.from_user.id) not in ADMIN_USER_IDS:
                     logger.info("Mute: perm denied: " + str(message.from_user.id))
                 else:
                     logger.info("Mute: try mute user: " + str(user_id))
                     until_date = (int(time.time()) + 3600)
-                    await bot.restrict_chat_member(chat_id=-1001173473651, user_id=int(user_id),
+                    await bot.restrict_chat_member(chat_id=CAKE_CHAT_ID, user_id=int(user_id),
                                                    permissions=ChatPermissions(can_send_messages=False),
                                                    until_date=until_date)
     except Exception as e:
@@ -1342,7 +1387,7 @@ async def muted(message: types.Message):
             return
         await message.delete()
         if message.reply_to_message is not None:
-            if message.from_user.id != 220117151 and message.from_user.id != 261865758:
+            if str(message.from_user.id) not in ADMIN_USER_IDS:
                 logger.info("muted: perm denied: " + str(message.from_user.id))
             else:
                 seconds = int(message.get_args().strip())
@@ -1359,12 +1404,12 @@ async def muted(message: types.Message):
             if not user_id or len(user_id) == 0:
                 logger.info("muted: user_id in message not found")
             else:
-                if message.from_user.id != 220117151 or message.from_user.id != 261865758:
+                if str(message.from_user.id) not in ADMIN_USER_IDS:
                     logger.info("muted: perm denied: " + str(message.from_user.id))
                 else:
                     logger.info("muted: try mute user: " + str(user_id))
                     until_date = (int(time.time()) + 3600)
-                    await bot.restrict_chat_member(chat_id=-1001173473651, user_id=int(user_id),
+                    await bot.restrict_chat_member(chat_id=CAKE_CHAT_ID, user_id=int(user_id),
                                                    permissions=ChatPermissions(can_send_messages=False),
                                                    until_date=until_date)
     except Exception as e:
@@ -1379,7 +1424,7 @@ async def unmute(message: types.Message):
             return
         await message.delete()
         if message.reply_to_message is not None:
-            if message.from_user.id != 220117151 or message.from_user.id != 261865758:
+            if str(message.from_user.id) not in ADMIN_USER_IDS:
                 logger.info("Unmute: perm denied: " + str(message.from_user.id))
             else:
                 logger.info("Unmute: try unmute user: " + str(message.reply_to_message.from_user.id))
@@ -1392,11 +1437,11 @@ async def unmute(message: types.Message):
             if not user_id or len(user_id) == 0:
                 logger.info("Unmute: user_id in message not found")
             else:
-                if message.from_user.id != 220117151 and message.from_user.id != 261865758:
+                if str(message.from_user.id) not in ADMIN_USER_IDS:
                     logger.info("Unmute: perm denied: " + str(message.from_user.id))
                 else:
                     logger.info("Unmute: try mute user: " + str(user_id))
-                    await bot.restrict_chat_member(chat_id=-1001173473651, user_id=int(user_id),
+                    await bot.restrict_chat_member(chat_id=CAKE_CHAT_ID, user_id=int(user_id),
                                                    permissions=ChatPermissions(can_send_messages=False),
                                                    until_date=(int(time.time()) + 60))
     except Exception as e:
@@ -1554,7 +1599,7 @@ async def say(message: types.Message):
             return
         await message.delete()
         text = message.get_args().strip()
-        if message.from_user.id != 220117151:
+        if str(message.from_user.id) != OWNER_USER_ID:
             logger.info("Say message: perm denied: " + str(message.from_user.id))
         else:
             if message.reply_to_message is None:
@@ -1577,16 +1622,16 @@ async def say_to_cake(message: types.Message):
             return
         await message.delete()
         text = message.get_args().strip()
-        if message.from_user.id != 220117151:
+        if str(message.from_user.id) != OWNER_USER_ID:
             logger.info("Say to cake message: perm denied: " + str(message.from_user.id))
         else:
             if message.reply_to_message is None:
                 logger.info("Say to cake message: try say message w text: " + str(text))
-                await bot.send_message(chat_id=-1001173473651, text=str(text))
+                await bot.send_message(chat_id=CAKE_CHAT_ID, text=str(text))
             else:
                 logger.info("Reply to cake  message: try repoly to message w text: " + str(
                     message.reply_to_message.text) + ", text: " + str(text))
-                await bot.send_message(chat_id=-1001173473651, text=str(text),
+                await bot.send_message(chat_id=CAKE_CHAT_ID, text=str(text),
                                        reply_to_message_id=message.reply_to_message.message_id)
     except Exception as e:
         logger.error('Failed to say to cake message user: ' + str(e))
@@ -1600,11 +1645,11 @@ async def check_permissions(message: types.Message):
             return
         await message.delete()
         text = message.get_args().strip()
-        if message.from_user.id != 220117151:
+        if str(message.from_user.id) != OWNER_USER_ID:
             logger.info("Check permissions: perm denied: " + str(message.from_user.id))
         else:
             logger.info("Check permissions: try check permissions...: ")
-            member = await bot.get_chat_member(chat_id=-1001173473651, user_id=int(TOKEN.split(":")[0]))
+            member = await bot.get_chat_member(chat_id=CAKE_CHAT_ID, user_id=int(TOKEN.split(":")[0]))
             # member = await bot.get_chat_member(chat_id=message.chat.id, user_id=int(TOKEN.split(":")[0]))
             logger.info("Check permissions: member:" + str(member))
     except Exception as e:
@@ -2198,7 +2243,7 @@ async def mine_status(message: types.Message):
             logger.error('Failed minestatus: ' + str(e))
             return
 
-        if message.chat.id != -1001531643521 and message.chat.id != -1001567412048:
+        if str(message.chat.id) not in ATERNOS_ACCESS_IDS:
             return
         try:
             logger.info('aternos: restoring from session...')
@@ -2237,7 +2282,7 @@ async def mine_start(message: types.Message):
             logger.error('Failed minestatus: ' + str(e))
             return
 
-        if message.chat.id != -1001531643521 and message.chat.id != -1001567412048:
+        if str(message.chat.id) not in ATERNOS_ACCESS_IDS:
             return
         try:
             logger.info('aternos: restoring from session...')
@@ -2332,8 +2377,7 @@ def get_emote_by_server_status(status: str) -> str:
 async def voice_message_handler(message: types.Message):
     logger.info("stt request")
     try:
-        #print(message.content_type)
-        if message.chat.id != -1001531643521 and message.chat.id != -1001567412048 and message.chat.id != -1001173473651 and message.chat.id != -1001401914025 and message.chat.id != -1001289529855:
+        if str(message.chat.id) not in STT_ACCESS_IDS:
             return
         if await is_old_message(message):
             return
@@ -2377,7 +2421,7 @@ async def post_handler(message: types.Message) -> None:
     try:
         if await is_old_message(message):
             return
-        if message.chat.id != -1001725391122:
+        if str(message.chat.id) != VOLJ_CHILL_CHANNEL_ID:
             return
         logger.info(
             "New post: from chat: " + str(message.chat.title)+", channel id: " + str(message.chat.id))
@@ -2388,7 +2432,7 @@ async def post_handler(message: types.Message) -> None:
         else:
             return
         logger.info("New post: start forwarding...")
-        f_message = await message.forward(chat_id=-1001531643521)
+        f_message = await message.forward(chat_id=VOLJ_CHILL_CHAT_ID)
         await voice_message_handler(f_message)
     except Exception as e:
         logger.error('New post: ' + str(e))

@@ -1,6 +1,7 @@
 #!/usr/bin/sh
-pkill python3
-pkill python3
+pkill -f bot.py
+pkill -f stream_checker.py
+pkill -f birthday_checker.py
 pkill chromiu
 sleep 5
 d=$(date +%Y-%m-%d-%H-%M-%S)
