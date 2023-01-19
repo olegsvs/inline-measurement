@@ -1149,7 +1149,7 @@ async def switch(message: types.Message) -> None:
             if not message.from_user.is_bot:
                 logger.info("xdd: " + str(username))
                 await message.answer_sticker(
-                    sticker='CAACAgIAAxkBAAEGfuFje8J9cAwqGQ9DdlZlgq2y1_xgHAACLCMAAqFd4Evu-xzV3LGr7ysE')
+                    sticker='CAACAgIAAxkBAAEHVTtjyLg59Kw7KlrSSqsSpW2nw3HKqAACgCMAAqzQ4EvYN2WqonJz_y0E')
         if find_whole_word('сэдкот')(str(message.text)) or \
                 find_whole_word('сэдкэт')(str(message.text)) or \
                 find_whole_word('sadcat')(str(message.text)) or \
@@ -1177,7 +1177,7 @@ async def switch(message: types.Message) -> None:
             if not message.from_user.is_bot:
                 logger.info("ВЖ: " + str(username))
                 await message.answer_sticker(
-                    sticker='CAACAgIAAxkBAAEGrH5jjCuhIUdYQtwbUuKXuUGI9jekPAACYB4AAhldYUhsrEhnM116LCsE')
+                    sticker='CAACAgIAAxkBAAEGIDVjTi0-ZF0drKvP0zeUkCtD7QAB-WIAAs8DAALgeVIHt6ePD9s35_cqBA')
         if str(message.text) == '/start@Crocodile_Covid_Bot':
             if not message.from_user.is_bot:
                 logger.info("start Crocodile_Covid_Bot: " + str(username))
@@ -1677,30 +1677,34 @@ async def handle_sticker(message: types.Message):
     logger.info("Sticker file id: " + message.sticker.file_unique_id)
     try:
         if message.sticker.file_unique_id == 'AgADLCMAAqFd4Es':
+            # xdd
             logger.info("Sticker: " + str(message.sticker.file_unique_id))
             await message.answer_sticker(
-                sticker='CAACAgIAAxkBAAEGfuFje8J9cAwqGQ9DdlZlgq2y1_xgHAACLCMAAqFd4Evu-xzV3LGr7ysE')
+                sticker='CAACAgIAAxkBAAEGfuNje8MzLbr1c81ZIugn9I45A6fm0gACXRoAApJdYEtMTTimqH0G8ysE')
     except:
         pass
     try:
         if message.sticker.file_unique_id == 'AgADXRoAApJdYEs':
+            # xdd
             logger.info("Sticker: " + str(message.sticker.file_unique_id))
             await message.answer_sticker(
-                sticker='CAACAgIAAxkBAAEGfuFje8J9cAwqGQ9DdlZlgq2y1_xgHAACLCMAAqFd4Evu-xzV3LGr7ysE')
+                sticker='CAACAgIAAxkBAAEGfuNje8MzLbr1c81ZIugn9I45A6fm0gACXRoAApJdYEtMTTimqH0G8ysE')
     except:
         pass
     try:
         if message.sticker.file_unique_id == 'AgADgCMAAqzQ4Es':
+            # xdd
             logger.info("Sticker: " + str(message.sticker.file_unique_id))
             await message.answer_sticker(
-                sticker='CAACAgIAAxkBAAEGfuFje8J9cAwqGQ9DdlZlgq2y1_xgHAACLCMAAqFd4Evu-xzV3LGr7ysE')
+                sticker='CAACAgIAAxkBAAEGfuNje8MzLbr1c81ZIugn9I45A6fm0gACXRoAApJdYEtMTTimqH0G8ysE')
     except:
         pass
     try:
         if message.sticker.file_unique_id == 'AgADfxoAAjAf0Uk':
+            # SHTO
             logger.info("Sticker: " + str(message.sticker.file_unique_id))
             await message.answer_sticker(
-                sticker='CAACAgIAAxkBAAEGmOBjhSSmq9ePfyNxo-6Jxm-6_gI7cwAClB4AAsSAKUgqlgjOm92cnSsE')
+                sticker='CAACAgIAAxkBAAEGmN5jhSP4lTNbCyd6EQ56XhM7zeQbBwACfxoAAjAf0UnKR8QKFENRVSsE')
     except:
         pass
 
