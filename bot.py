@@ -28,7 +28,16 @@ from stt import STT
 from summary import Summary
 import openai
 from asgiref.sync import sync_to_async
-from pyChatGPT import ChatGPT
+#from pyChatGPT import ChatGPT
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options
+import pyimgur
+from PIL import Image
+import functools
+import degenerator
 
 
 # Enable logging
@@ -56,7 +65,10 @@ ATERNOS_ACCESS_IDS = os.getenv("ATERNOS_ACCESS_IDS")
 STT_ACCESS_IDS = os.getenv("STT_ACCESS_IDS")
 VOLJ_CHILL_CHANNEL_ID = os.getenv("VOLJ_CHILL_CHANNEL_ID")
 VOLJ_CHILL_CHAT_ID = os.getenv("VOLJ_CHILL_CHAT_ID")
-
+BOT_TEST_ROOM_CHAT_ID = os.getenv("BOT_TEST_ROOM_CHAT_ID")
+IMGUR_ID = os.getenv("IMGUR_ID")
+IMGFLIP_USERNAME = os.getenv("IMGFLIP_USERNAME")
+IMGFLIP_PASSWORD = os.getenv("IMGFLIP_PASSWORD")
 
 bot = Bot(token=TOKEN)
 storage = MemoryStorage()
@@ -548,7 +560,7 @@ async def is_old_message(message: types.Message):
         "Check is old message, msg ts : " + str(round(message.date.timestamp())) + " now ts: " + str(round(now_ts)))
     if round(message.date.timestamp() + 300) < round(now_ts):
         logger.info("Check is old message, deleting")
-        await message.delete()
+        #await message.delete()
         return True
     else:
         logger.info("Check is old message, is now message")
@@ -966,6 +978,57 @@ async def summary(message: types.Message):
         logger.error('Failed summary: ' + str(e) + ", line: " + str(exc_tb.tb_lineno))
 
 
+@dp.message_handler(commands=['meme'])
+async def ask(message: types.Message):
+    logger.info("meme request")
+    try:
+        if await is_old_message(message):
+            return
+        args = message.get_args().strip()
+        if not args or len(args) == 0:
+            bot_message = await message.reply(
+                "Укажите одно или два слова через пробел",
+                parse_mode=ParseMode.HTML,
+            )
+            await asyncio.sleep(3)
+            await message.delete()
+            await bot.delete_message(chat_id=bot_message.chat.id, message_id=bot_message.message_id)
+        else:
+            logger.info('meme, question: ' + args)
+            username = IMGFLIP_USERNAME
+            password = IMGFLIP_PASSWORD
+            damn_data = requests.get('https://api.imgflip.com/get_memes').json()['data']['memes']
+            memepics = [{'name': image['name'], 'url': image['url'], 'id': image['id']} for image in damn_data]
+            test = args.split(' ')
+            if len(test) > 2 or len(test) < 1:
+                bot_message = await message.reply(
+                    "Укажите одно или два слова через пробел",
+                    parse_mode=ParseMode.HTML,
+                )
+                await asyncio.sleep(3)
+                await message.delete()
+                await bot.delete_message(chat_id=bot_message.chat.id, message_id=bot_message.message_id)
+            txt1 = test[0]
+            txt2 = None
+            if len(test) == 2:
+                txt2 = test[1]
+
+            URL = 'https://api.imgflip.com/caption_image'
+            params = {
+                'username': username,
+                'password': password,
+                'template_id': memepics[random.randint(1, 100)]['id'],
+                'text0': txt1,
+                'text1': txt2
+            }
+            response = requests.request('POST', URL, params=params).json()
+            logger.info('meme, response:' + response['data']['url'])
+            await message.reply_photo(photo=response['data']['url'],
+                                parse_mode=ParseMode.HTML)
+    except Exception as e:
+        logger.error('Failed to meme: ' + str(e))
+
+
 @dp.message_handler(commands=['ask'])
 async def ask(message: types.Message):
     logger.info("ask request")
@@ -1140,16 +1203,31 @@ async def switch(message: types.Message) -> None:
                 logger.info("уы: " + str(username))
                 await message.answer_sticker(
                     sticker='CAACAgIAAxkBAAEHSQdjxYpNE1uIkfj-qyXEHmsKhwle_gACcSoAAkwSIUrCQBlAfjIt3i0E')
+        if find_whole_word('1984')(str(message.text)):
+            if not message.from_user.is_bot:
+                logger.info("1984: " + str(username))
+                await message.answer_sticker(
+                    sticker='CAACAgIAAxkBAAEHXIRjypszy6aYzlnc2N_fqskTMAABjpAAAkgmAAJQLlhKiA2tO_8HjJgtBA')
         if find_whole_word('изи')(str(message.text)) or find_whole_word('ez')(str(message.text)) or find_whole_word('ezy')(str(message.text)):
             if not message.from_user.is_bot:
                 logger.info("ez: " + str(username))
                 await message.answer_sticker(
                     sticker='CAACAgIAAxkBAAEHKexjuaZv0tviCBQRzYNaI48fkJopjwACNwQAAug89xr6qohIKZJqPi0E')
+        if find_whole_word('юля')(str(message.text)) or find_whole_word('шизя')(str(message.text)) or find_whole_word('юзя')(str(message.text)):
+            if not message.from_user.is_bot:
+                logger.info("uzy: " + str(username))
+                await message.answer_sticker(
+                    sticker='CAACAgIAAxkBAAEHXHtjyppGSRNkb_cCJNSqaAYIiBCtTQACYRoAAotm-Uhrqn-XuhrxXi0E')
         if find_whole_word('xdd')(str(message.text)) or find_whole_word('хдд')(str(message.text)):
             if not message.from_user.is_bot:
                 logger.info("xdd: " + str(username))
                 await message.answer_sticker(
                     sticker='CAACAgIAAxkBAAEHVTtjyLg59Kw7KlrSSqsSpW2nw3HKqAACgCMAAqzQ4EvYN2WqonJz_y0E')
+        if find_whole_word('срать')(str(message.text)) or find_whole_word('насрано')(str(message.text)):
+            if not message.from_user.is_bot:
+                logger.info("srat: " + str(username))
+                await message.answer_sticker(
+                    sticker='CAACAgIAAxkBAAEHWmRjyltoDcmn6nNqslVvUrae3f7BmQACuCIAAvNvUUhdtnR8pPKdhy0E')
         if find_whole_word('сэдкот')(str(message.text)) or \
                 find_whole_word('сэдкэт')(str(message.text)) or \
                 find_whole_word('sadcat')(str(message.text)) or \
@@ -2440,6 +2518,75 @@ async def post_handler(message: types.Message) -> None:
         await voice_message_handler(f_message)
     except Exception as e:
         logger.error('New post: ' + str(e))
+
+
+@dp.message_handler(commands=['dmt'])
+async def demotivation_message_handler(reply_message: types.Message):
+    logger.info("demotivation request")
+    file_on_disk = None
+    try:
+        if await is_old_message(reply_message):
+            return
+        if reply_message.reply_to_message is None:
+            bot_message = await reply_message.reply(
+                "Ответьте командой на сообщение с картинкой или gif анимацией",
+                parse_mode=ParseMode.HTML,
+            )
+            await asyncio.sleep(3)
+            await reply_message.delete()
+            await bot.delete_message(chat_id=bot_message.chat.id, message_id=bot_message.message_id)
+            return
+        message = reply_message.reply_to_message
+        file_ext = None
+        if message.content_type == types.ContentType.ANIMATION:
+            file_id = message.animation.file_id
+            print(message.animation.file_name)
+            file_ext='.mp4'
+        elif message.content_type == types.ContentType.PHOTO:
+            file_id = message.photo[len(message.photo)-1].file_id
+            file_ext='.jpg'
+        else:
+            bot_message = await reply_message.reply(
+                "Ответьте командой на сообщение с картинкой или gif анимацией",
+                parse_mode=ParseMode.HTML,
+            )
+            await asyncio.sleep(3)
+            await reply_message.delete()
+            await bot.delete_message(chat_id=bot_message.chat.id, message_id=bot_message.message_id)
+            return
+        args = reply_message.get_args().strip()
+        text = None
+        if args and len(args) != 0:
+            text = args
+        member = await message.chat.get_member(message.from_user.id)
+        username = message.from_user.mention
+        logger.info(
+            "demotivation request: from chat: " + str(message.chat.title) + ", user_name: " + str(
+                username) + ", message: " + str(message.text) + ", message_id: " + str(
+                message.message_id) + ", user_id: " + str(
+                message.from_user.id) + ", chat_id: " + str(
+                message.chat.id) + ", status: " + str(member.status))
+
+        file = await bot.get_file(file_id)
+        file_path = file.file_path
+        file_on_disk = Path("image_cache", f"{file_id}{file_ext}")
+        await bot.download_file(file_path, destination=file_on_disk)
+        input_file = f"image_cache/{file_id}{file_ext}"
+        output_file = f"image_cache/result_{file_id}{file_ext}"
+        p_func = functools.partial(degenerator.generate_demotivator, input_file, output_file, text)
+        await asyncio.get_running_loop().run_in_executor(None, p_func)
+        result_media = open(f"image_cache/result_{file_id}{file_ext}", 'rb')
+        if file_ext == '.jpg':
+            await bot.send_photo(chat_id=message.chat.id, photo=result_media)
+        else:
+            await bot.send_animation(chat_id=message.chat.id, animation=result_media)
+        os.remove(f"image_cache/result_{file_id}{file_ext}")
+        os.remove(file_on_disk)
+    except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        logger.error('Failed demotivation: ' + str(e) + ", line: " + str(exc_tb.tb_lineno))
+        if file_on_disk is not None and file_on_disk.exists():
+            os.remove(file_on_disk)
 
 
 def main():

@@ -113,9 +113,9 @@ def send_to_vk_wall(user_login: str, group_id: str, msg: str, photo_url=None):
 
 async def main():
     first_task = asyncio.create_task(check_stream('c_a_k_e', os.getenv("CAKE_CHANNEL_ID"), 'завёл', os.getenv("VK_CAKE_GROUP_ID")))
-    second_task = asyncio.create_task(check_stream('nastjadd', os.getenv("NASTJIADD_CHAT_ID"), 'завела'))
+    #second_task = asyncio.create_task(check_stream('nastjadd', os.getenv("NASTJIADD_CHAT_ID"), 'завела'))
     third_task = asyncio.create_task(check_stream('roadhouse', os.getenv("BOT_TEST_ROOM_CHANNEL_ID"), 'завёл', os.getenv("VK_TEST_GROUP_ID")))
-    await asyncio.gather(first_task, second_task, third_task)
+    await asyncio.gather(first_task, third_task)
 
 asyncio.run(main())
 

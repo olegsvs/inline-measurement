@@ -19,3 +19,6 @@ transformers==4.25.1
 webdriver_manager==3.8.5
 pyChatGPT
 vk-api
+Pillow
+sentencepiece
+opencv-python

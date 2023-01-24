@@ -1,3 +1,5 @@
+Python 3.10.x
+
 Copy example.env to .env and set api keys.
 
 Install python requirements:
