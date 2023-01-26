@@ -128,6 +128,10 @@ def get_start_text():
            '/bottom10, /b - Показать у кого меньше всех очков\n' \
            '/coin, /c - Подбросить монетку\n' \
            '/anekdot /an - Случайный анекдот с anekdot.ru\n' \
+           '/meme - Случайный фон под текст, просто рандом\n' \
+           '/dmt - Создать демотиватор(укажите текст после команды или оставьте пустым для случайного)\n' \
+           '/ask - Задать вопрос нейросети OpenAI GPT3 (c_a_k_e, nastjadd and voljchill chats only)\n' \
+           '/image - Картинка по описанию от нейросети OpenAI DALL_E (voljchill chat only)\n' \
            '' + get_raspberry_info()
 
 
@@ -143,7 +147,11 @@ def get_info_text():
            '/top10, /t - Показать топ 10 по очкам\n' \
            '/bottom10, /b - Показать у кого меньше всех очков\n' \
            '/coin, /c - Подбросить монетку\n' \
-           '/anekdot /an - Случайный анекдот с anekdot.ru'
+           '/anekdot /an - Случайный анекдот с anekdot.ru\n' \
+           '/meme - Случайный фон под текст, просто рандом\n' \
+           '/dmt - Создать демотиватор(укажите текст после команды или оставьте пустым для случайного)\n' \
+           '/ask - Задать вопрос нейросети OpenAI GPT3 (c_a_k_e, nastjadd and voljchill chats only)\n' \
+           '/image - Картинка по описанию от нейросети OpenAI DALL_E (voljchill chat only)'
 
 
 @dp.message_handler(commands=['start'])
@@ -155,9 +163,9 @@ async def start(message: types.Message):
     try:
         bot_message = await message.reply(get_start_text(),
                                           reply_markup=InlineKeyboardMarkup(inline_keyboard=key_board))
-        await asyncio.sleep(20)
-        await bot_message.delete()
-        await message.delete()
+        #await asyncio.sleep(20)
+        #await bot_message.delete()
+        #await message.delete()
     except Exception as e:
         logger.error('Failed start: ' + str(e))
 
@@ -574,9 +582,9 @@ async def info(message: types.Message):
         if await is_old_message(message):
             return
         bot_message = await message.reply(get_info_text(), disable_web_page_preview=True)
-        await asyncio.sleep(20)
-        await bot_message.delete()
-        await message.delete()
+        #await asyncio.sleep(20)
+        #await bot_message.delete()
+        #await message.delete()
     except Exception as e:
         logger.error('Failed info: ' + str(e))
 
@@ -1164,7 +1172,13 @@ async def switch(message: types.Message) -> None:
         member = await message.chat.get_member(message.from_user.id)
         username = message.from_user.mention
         file_object = open('messages/chat_' + str(message.chat.id), 'a+', encoding='utf-8')
-        file_object.write(str(message.text) + '\n')
+        user_name = ''
+        if message.from_user.username:
+            user_name = message.from_user.username
+        if message.from_user.first_name:
+            user_name = message.from_user.first_name
+        file_object.write(user_name + ' пишет: ' + str(message.text) + '\n')
+        #file_object.write(str(message.text) + '\n')
         file_object.close()
         logger.info(
             "New message: from chat: " + str(message.chat.title) + ", user_name: " + str(
