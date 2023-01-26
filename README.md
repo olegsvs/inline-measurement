@@ -14,4 +14,4 @@ Edit paths in cold_restart.sh and run cold_restart.sh
 
 Used wordle(https://wordle.belousov.one/) solver from https://github.com/pedrecho/wordle
 
-Degenerator.py from https://github.com/nesclass/demotivator-bot
+Degenerator.py from https://github.com/nesclass/demotivator-bot (add font.ttf to root dir)
