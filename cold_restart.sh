@@ -11,6 +11,7 @@ mkdir logs
 mkdir roulette
 mkdir voice_cache
 mkdir image_cache
+mkdir anime_qq/image_cache
 rm wordle.png
 rm wordle_screenshot_imgur_link.txt
 rm wordle_not_solved_screenshot_imgur_link.txt

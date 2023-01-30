@@ -40,6 +40,7 @@ import functools
 import degenerator
 import horoscope
 import weather
+import anime as anime_qq
 
 # Enable logging
 logging.basicConfig(
@@ -99,14 +100,12 @@ sad_emoji = ['😒', '☹️', '😣', '🥺', '😞', '🙄', '😟', '😠', '
 happy_emoji = ['😀', '😏', '😱', '😂', '😁', '😂', '😉', '😊', '😋', '😎', '☺', '😏']
 
 
-def get_raspberry_info():
+def get_hw_info():
     if platform == "linux":
         try:
-            rasp_model = subprocess.run(['cat', '/sys/firmware/devicetree/base/model'], capture_output=True,
+            neofetch = subprocess.run(['neofetch','--stdout', '--color_blocks off', '--off'], capture_output=True,
                                         text=True).stdout.strip("\n")
-            temp = subprocess.run(['vcgencmd', 'measure_temp'], capture_output=True, text=True).stdout.strip("\n")
-            uptime = subprocess.run(['uptime', '-p'], capture_output=True, text=True).stdout.strip("\n")
-            return 'Запущено на: ' + rasp_model + ', ' + temp + '\nUptime: ' + uptime
+            return neofetch
         except:
             return ''
     else:
@@ -133,9 +132,8 @@ def get_start_text():
            '/dmt - Создать демотиватор(укажите текст после команды или оставьте пустым для случайного)\n' \
            '/ask - Задать вопрос нейросети OpenAI GPT3 (c_a_k_e, nastjadd and voljchill chats only)\n' \
            '/image - Картинка по описанию от нейросети OpenAI DALL_E (voljchill chat only)\n' \
-           '/horoscope - Гороскоп (/h)' \
-           '/weather, /w - Узнать погоду, укажите город после команды\n' \
-           '' + get_raspberry_info()
+           '/horoscope - Гороскоп (/h)\n' \
+           '/weather, /w - Узнать погоду, укажите город после команды'
 
 
 def get_info_text():
@@ -661,6 +659,17 @@ async def ping(message: types.Message):
         await bot_message.delete()
     except Exception as e:
         logger.error('Failed ping: ' + str(e))
+
+
+@dp.message_handler(commands=['hwinfo', 'hw'])
+async def stats(message: types.Message):
+    logger.info("stats request")
+    try:
+        if await is_old_message(message):
+            return
+        bot_message = await message.reply_photo(photo="https://i.imgur.com/xVRpb8E.png", caption=get_hw_info())
+    except Exception as e:
+        logger.error('Failed stats: ' + str(e))
 
 
 @dp.message_handler(commands=['coin', 'c'])
@@ -2659,6 +2668,72 @@ async def demotivation_message_handler(reply_message: types.Message):
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         logger.error('Failed demotivation: ' + str(e) + ", line: " + str(exc_tb.tb_lineno))
+        if file_on_disk is not None and file_on_disk.exists():
+            os.remove(file_on_disk)
+
+
+@dp.message_handler(commands=['anime'])
+async def anime_message_handler(reply_message: types.Message):
+    logger.info("anime request")
+    file_on_disk = None
+    sticker = None
+    try:
+        if await is_old_message(reply_message):
+            return
+        if reply_message.reply_to_message is None:
+            bot_message = await reply_message.reply(
+                "Ответьте командой на сообщение с картинкой, содержащее лицо",
+                parse_mode=ParseMode.HTML,
+            )
+            await asyncio.sleep(3)
+            await reply_message.delete()
+            await bot.delete_message(chat_id=bot_message.chat.id, message_id=bot_message.message_id)
+            return
+        message = reply_message.reply_to_message
+        file_ext = None
+        if message.content_type == types.ContentType.PHOTO:
+            file_id = message.photo[len(message.photo)-1].file_id
+            file_ext='.jpg'
+        else:
+            bot_message = await reply_message.reply(
+                "Ответьте командой на сообщение с картинкой, содержащее лицо",
+                parse_mode=ParseMode.HTML,
+            )
+            await asyncio.sleep(3)
+            await reply_message.delete()
+            await bot.delete_message(chat_id=bot_message.chat.id, message_id=bot_message.message_id)
+            return
+        member = await message.chat.get_member(message.from_user.id)
+        username = message.from_user.mention
+        logger.info(
+            "anime request: from chat: " + str(message.chat.title) + ", user_name: " + str(
+                username) + ", message: " + str(message.text) + ", message_id: " + str(
+                message.message_id) + ", user_id: " + str(
+                message.from_user.id) + ", chat_id: " + str(
+                message.chat.id) + ", status: " + str(member.status))
+        sticker = await message.reply_sticker(sticker=get_search_sticker())
+        file = await bot.get_file(file_id)
+        file_path = file.file_path
+        file_on_disk = Path("anime_qq/image_cache", f"{file_id}{file_ext}")
+        await bot.download_file(file_path, destination=file_on_disk)
+        input_file = f"anime_qq/image_cache/{file_id}{file_ext}"
+        output_file = f"anime_qq/image_cache/result_{file_id}{file_ext}"
+        await sync_to_async(anime_qq.photo_to_anime)(input_file, output_file)
+        result_media = open(f"anime_qq/image_cache/result_{file_id}{file_ext}", 'rb')
+        await sticker.delete()
+        sticker = None
+        await reply_message.reply_photo(photo=result_media)
+        os.remove(f"anime_qq/image_cache/result_{file_id}{file_ext}")
+        os.remove(file_on_disk)
+    except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        logger.error('Failed anime: ' + str(e) + ", line: " + str(exc_tb.tb_lineno))
+        bot_message = await message.reply(
+                    "Произошла ошибка : " + str(e),
+                    parse_mode=ParseMode.HTML,
+        )
+        if sticker:
+            await sticker.delete()
         if file_on_disk is not None and file_on_disk.exists():
             os.remove(file_on_disk)
 

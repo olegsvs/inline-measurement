@@ -4,8 +4,6 @@ import os
 import requests
 from aiogram.utils.markdown import hbold
 
-forecast_weather = []
-
 load_dotenv()
 weather_api = os.getenv("OPENWEATHERMAP_API")
 
@@ -25,7 +23,7 @@ async def get_weather(city: str):
         f'http://api.openweathermap.org/data/2.5/weather?q={city}&appid={weather_api}&units=metric').json()
 
     if data_weather['cod'] == '404':
-        return 'Город не найден'
+        return 'Не найдено'
     weather_description = data_weather['weather'][0]['main']
 
     if weather_description in code_to_smile:
@@ -43,11 +41,11 @@ async def get_weather(city: str):
     sunset = datetime.datetime.fromtimestamp(data_weather['sys']['sunset'])
     forecast = (f'{hbold(city)} - {hbold(date)}\n'
                           f'️{hbold(wd)}\n'
-                          f'🌡️ {hbold("Температура")} - {hbold(temp)}℃\n'
-                          f'🌡️ {hbold("Ощущается как")} - {hbold(feels_like)}℃\n'
-                          f'🌡️ {hbold("Максимальная температура")} - {hbold(temp_max)}℃\n'
-                          f'🌡️ {hbold("Минимальная температура")} - {hbold(temp_min)}℃\n'
-                          f'💧 {hbold("Влажность")} - {hbold(humidity)}%\n'
-                          f'🌅 {hbold("Рассвет")} - {hbold(sunrise.strftime("%H:%M"))}\n'
-                          f'🌇 {hbold("Закат")} - {hbold(sunset.strftime("%H:%M"))}')
+                          f'🌡️ {hbold("Температура")}: {hbold(temp)}℃\n'
+                          f'🌡️ {hbold("Ощущается как")}: {hbold(feels_like)}℃\n'
+                          f'🌡️ {hbold("Максимальная температура")}: {hbold(temp_max)}℃\n'
+                          f'🌡️ {hbold("Минимальная температура")}: {hbold(temp_min)}℃\n'
+                          f'💧 {hbold("Влажность")}: {hbold(humidity)}%\n'
+                          f'🌅 {hbold("Рассвет")}: {hbold(sunrise.strftime("%H:%M"))}\n'
+                          f'🌇 {hbold("Закат")}: {hbold(sunset.strftime("%H:%M"))}')
     return forecast
