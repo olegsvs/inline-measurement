@@ -38,7 +38,8 @@ import pyimgur
 from PIL import Image
 import functools
 import degenerator
-
+import horoscope
+import weather
 
 # Enable logging
 logging.basicConfig(
@@ -132,6 +133,8 @@ def get_start_text():
            '/dmt - Создать демотиватор(укажите текст после команды или оставьте пустым для случайного)\n' \
            '/ask - Задать вопрос нейросети OpenAI GPT3 (c_a_k_e, nastjadd and voljchill chats only)\n' \
            '/image - Картинка по описанию от нейросети OpenAI DALL_E (voljchill chat only)\n' \
+           '/horoscope - Гороскоп (/h)' \
+           '/weather, /w - Узнать погоду, укажите город после команды\n' \
            '' + get_raspberry_info()
 
 
@@ -151,7 +154,9 @@ def get_info_text():
            '/meme - Случайный фон под текст, просто рандом\n' \
            '/dmt - Создать демотиватор(укажите текст после команды или оставьте пустым для случайного)\n' \
            '/ask - Задать вопрос нейросети OpenAI GPT3 (c_a_k_e, nastjadd and voljchill chats only)\n' \
-           '/image - Картинка по описанию от нейросети OpenAI DALL_E (voljchill chat only)'
+           '/image - Картинка по описанию от нейросети OpenAI DALL_E (voljchill chat only)\n' \
+           '/weather, /w - Узнать погоду, укажите город после команды\n' \
+           '/horoscope - Гороскоп (/h)'
 
 
 @dp.message_handler(commands=['start'])
@@ -270,6 +275,56 @@ key_get_my_gay_result = [
 ]
 
 
+key_horoscope_result = [
+    [
+        InlineKeyboardButton('Овен', callback_data='Овен'),
+        InlineKeyboardButton('Телец', callback_data='Телец'),
+        InlineKeyboardButton('Близнецы', callback_data='Близнецы'),
+        InlineKeyboardButton('Рак', callback_data='Рак'),
+    ],
+    [
+        InlineKeyboardButton('Лев', callback_data='Лев'),
+        InlineKeyboardButton('Дева', callback_data='Дева'),
+        InlineKeyboardButton('Весы', callback_data='Весы'),
+        InlineKeyboardButton('Скорпион', callback_data='Скорпион'),
+     ],
+    [
+        InlineKeyboardButton('Стрелец', callback_data='Стрелец'),
+        InlineKeyboardButton('Козерог', callback_data='Козерог'),
+        InlineKeyboardButton('Водолей', callback_data='Водолей'),
+        InlineKeyboardButton('Рыбы', callback_data='Рыбы'),
+    ],
+]
+
+
+@dp.message_handler(commands=['horoscope', 'h'])
+async def get_horoscope(message: types.Message):
+    logger.info("horoscope request")
+    try:
+        if await is_old_message(message):
+            return
+        await message.reply(
+                "Гороскоп: выберите знак",
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=key_horoscope_result)
+            )
+    except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        logger.error('Failed horoscope: ' + str(e) + ", line: " + str(exc_tb.tb_lineno))
+
+
+@dp.callback_query_handler()
+async def callback_worker(call):
+    try:
+        print(call)
+        horo = horoscope.getHoro(horoscope.request(), horoscope.apiSigns.get(call.data))
+        await bot.send_message(chat_id=call.message.chat.id, text=call.from_user.get_mention(as_html=True) + ', гороскоп для ' + call.data + str(horo), parse_mode=ParseMode.HTML)
+    except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        logger.error('Failed horoscope callback_worker: ' + str(e) + ", line: " + str(exc_tb.tb_lineno))
+        await bot.send_message(chat_id=call.message.chat.id, text='Произошла ошибка при запросе гороскопа, попробуйте позднее')
+
+
 @dp.chosen_inline_handler()
 async def on_result_chosen(message: types.Message):
     logger.info(message)
@@ -379,20 +434,25 @@ async def inlinequery(inline_query: InlineQuery):
 
 
 def get_random_anekdot_ru():
-    headers = {
-        'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.109 Safari/537.36 OPR/84.0.4316.52'
-    }
-    import requests
-    from bs4 import BeautifulSoup
-    url = 'https://www.anekdot.ru/random/anekdot/'
-    page = requests.get(url, timeout=2)
-    soup = BeautifulSoup(page.text, "html.parser")
-    anekdot = soup.find(class_='text')
-    anekdot = str(anekdot)
-    anekdot = anekdot.replace('<div class="text">', '')
-    anekdot = anekdot.replace('<br/>', '\n')
-    anekdot = anekdot.replace('</div>', '')
-    return anekdot
+    logger.info("anekdot request")
+    try:
+        headers = {
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.109 Safari/537.36 OPR/84.0.4316.52'
+        }
+        import requests
+        from bs4 import BeautifulSoup
+        url = 'https://www.anekdot.ru/random/anekdot/'
+        page = requests.get(url, timeout=2)
+        soup = BeautifulSoup(page.text, "html.parser")
+        anekdot = soup.find(class_='text')
+        anekdot = str(anekdot)
+        anekdot = anekdot.replace('<div class="text">', '')
+        anekdot = anekdot.replace('<br/>', '\n')
+        anekdot = anekdot.replace('</div>', '')
+        return anekdot
+    except Exception as e:
+        logger.error('Failed anekdot: ' + str(e))
+        return 'Анекдот: Попробуйте позднее'
 
 
 def get_random_choice():
@@ -2591,9 +2651,9 @@ async def demotivation_message_handler(reply_message: types.Message):
         await asyncio.get_running_loop().run_in_executor(None, p_func)
         result_media = open(f"image_cache/result_{file_id}{file_ext}", 'rb')
         if file_ext == '.jpg':
-            await bot.send_photo(chat_id=message.chat.id, photo=result_media)
+            await reply_message.reply_photo(photo=result_media)
         else:
-            await bot.send_animation(chat_id=message.chat.id, animation=result_media)
+            await reply_message.reply_animation(animation=result_media)
         os.remove(f"image_cache/result_{file_id}{file_ext}")
         os.remove(file_on_disk)
     except Exception as e:
@@ -2601,6 +2661,36 @@ async def demotivation_message_handler(reply_message: types.Message):
         logger.error('Failed demotivation: ' + str(e) + ", line: " + str(exc_tb.tb_lineno))
         if file_on_disk is not None and file_on_disk.exists():
             os.remove(file_on_disk)
+
+
+@dp.message_handler(commands=['weather', 'w'])
+async def handle_weather(message: types.Message):
+    logger.info("weather request")
+    try:
+        if await is_old_message(message):
+            return
+        city = message.get_args().strip()
+        if not city or len(city) == 0:
+            bot_message = await message.reply(
+                "Укажите населённый пункт, пример: <code>/weather Moscow</code>",
+                parse_mode=ParseMode.HTML,
+            )
+            await asyncio.sleep(3)
+            await message.delete()
+            await bot.delete_message(chat_id=bot_message.chat.id, message_id=bot_message.message_id)
+        else:
+            logger.info('Weather, city: ' + city)
+            res = await weather.get_weather(city)
+            await message.reply(res, parse_mode=ParseMode.HTML)
+    except Exception as e:
+        logger.error('Failed to get weather: ' + str(e))
+        bot_message = await message.reply(
+            "Произошла ошибка при получении погоды",
+            parse_mode=ParseMode.HTML,
+        )
+        await asyncio.sleep(3)
+        await message.delete()
+        await bot_message.delete()
 
 
 def main():
