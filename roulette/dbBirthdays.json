@@ -1,0 +1,109 @@
+{
+    "users": [
+        {
+            "username": "Alekseydz",
+            "birthdate": "15.08",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "feeriyas",
+            "birthdate": "22.05",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "saliti_ce_9",
+            "birthdate": "10.01",
+            "last_sent_in_year": 2023
+        },
+        {
+            "username": "Ivan_Roflan_RPGlit",
+            "birthdate": "04.06",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "xeko140",
+            "birthdate": "19.02",
+            "last_sent_in_year": 2023
+        },
+        {
+            "username": "takesikovac",
+            "birthdate": "11.05",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "Shakarss",
+            "birthdate": "04.12",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "balitskii",
+            "birthdate": "02.08",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "Ex1sTs",
+            "birthdate": "19.07",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "kolmaddy",
+            "birthdate": "18.08",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "matulRR",
+            "birthdate": "16.04",
+            "last_sent_in_year": 2023
+        },
+        {
+            "username": "telegovskie_moonlight",
+            "birthdate": "23.11",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "ivanskurko",
+            "birthdate": "03.09",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "deikonikita",
+            "birthdate": "02.07",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "olegsvs",
+            "birthdate": "29.11",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "vesk1r",
+            "birthdate": "21.07",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "hell_pipe",
+            "birthdate": "24.11",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "Ki0_O",
+            "birthdate": "28.09",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "JesusChrlst",
+            "birthdate": "04.10",
+            "last_sent_in_year": 0
+        },
+        {
+            "username": "SquidwardIsCute",
+            "birthdate": "05.01",
+            "last_sent_in_year": 2023
+        },
+        {
+            "username": "Lisvlad1",
+            "birthdate": "28.07",
+            "last_sent_in_year": 0
+        }
+    ]
+}

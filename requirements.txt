@@ -3,7 +3,7 @@ asgiref==3.6.0
 beautifulsoup4==4.11.1
 lxml==4.9.1
 numpy==1.23.3
-openai==0.25.0
+openai
 pandas==1.5.2
 pyimgur==0.6.0
 python-dotenv==0.21.0
@@ -17,8 +17,8 @@ torch==1.12.1
 tqdm==4.64.1
 transformers==4.25.1
 webdriver_manager==3.8.5
-pyChatGPT
 vk-api
 Pillow
 sentencepiece
 opencv-python
+revChatGPT

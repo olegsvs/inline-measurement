@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 class Summary:
     def __init__(self) -> None:
+        #self.model_name = "IlyaGusev/mbart_ru_sum_gazeta"
+        #self.tokenizer = MBartTokenizer.from_pretrained(self.model_name)
+        #self.model = MBartForConditionalGeneration.from_pretrained(self.model_name)
         self.model_name = "Kirili4ik/mbart_ruDialogSum"
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = MBartForConditionalGeneration.from_pretrained(self.model_name)
@@ -47,8 +50,10 @@ class Summary:
             output_ids = self.model.generate(
                 input_ids=input_ids,
                 top_k=0,
-                num_beams=3,
-                no_repeat_ngram_size=3
+                num_beams=4,
+                no_repeat_ngram_size=4
+#    input_ids=input_ids,
+#    no_repeat_ngram_size=4
             )[0]
 
             summary = self.tokenizer.decode(output_ids, skip_special_tokens=True)
