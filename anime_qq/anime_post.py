@@ -21,8 +21,6 @@ class AnimePost:
     @staticmethod
     def get_anime_image(filename: str) -> AnimeResponse:
         proxies = {
-           'http': 'http://45.136.199.126:3128',
-           'https': '45.136.199.126:3128',
         }
 
         post_url = "https://ai.tu.qq.com/overseas/trpc.shadow_cv.ai_processor_cgi.AIProcessorCgi/Process"
