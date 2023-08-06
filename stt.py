@@ -16,14 +16,11 @@ private_key = os.getenv("YANDEX_PRIVATE_KEY").replace('\\n', '\n').encode()
 
 class STT:
     default_init = {
-        "model_path": "models/vosk",
         "sample_rate": 16000,
     }
 
     def __init__(self,
-                 model_path=None,
                  sample_rate=None,
-                 ffmpeg_path=None
                  ) -> None:
         self.sample_rate = sample_rate if sample_rate else STT.default_init["sample_rate"]
 
